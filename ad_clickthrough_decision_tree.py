@@ -46,11 +46,12 @@ print(class_weights)
 
 # Specify hyperparameters
 from sklearn.tree import DecisionTreeClassifier
-# parameters = {'max_depth': [3, 10, 15, 20, 25, 30, 35, 50, None], 'min_samples_split': [150, 350, 500, 750, 1000, 1150, 1250, 1500]}
-parameters = {'max_depth': [30], 'min_samples_split': [1000]}
- 
+# parameters = {'max_depth': [3, 10, None]} # original parameters
+# parameters = {'max_depth': [3, 8, 10, 15, 20, 30, None], 'min_samples_split': [10, 30, 50]} # tuning
+parameters = {'max_depth': [20], 'min_samples_split': [50]} # best parameters after tuning
+  
 # Initialize decision tree
-decision_tree = DecisionTreeClassifier(criterion='gini', class_weight=class_weights)
+decision_tree = DecisionTreeClassifier(criterion='gini', class_weight=class_weights, min_samples_split=30)
 
 # 3-fold cross validation since training set is relatively small
 from sklearn.model_selection import GridSearchCV
@@ -73,15 +74,15 @@ print(f'The ROC AUC on testing set using a decision tree is: {roc_auc_score(Y_te
 
 # print(f'The ROC AUC on testing set using random sampling is: {roc_auc_score(Y_test, pos_prob):.3f}')
 
+from sklearn.ensemble import RandomForestClassifier
 
-# from sklearn.ensemble import RandomForestClassifier
+parameters = {'max_depth': [None], 'min_samples_split': [50]} # best parameters after tuning
+random_forest = RandomForestClassifier(n_estimators=100, max_features="sqrt", criterion='gini', n_jobs=-1)
+grid_search = GridSearchCV(random_forest, parameters, n_jobs=-1, cv=3, scoring='roc_auc')
+grid_search.fit(X_train_enc, Y_train)
+print(grid_search.best_params_)
+print(grid_search.best_score_)
 
-# random_forest = RandomForestClassifier(n_estimators=100, criterion='gini', min_samples_split=30, n_jobs=-1)
-# grid_search = GridSearchCV(random_forest, parameters, n_jobs=-1, cv=3, scoring='roc_auc')
-# grid_search.fit(X_train_enc, Y_train)
-# print(grid_search.best_params_)
-# print(grid_search.best_score_)
-
-# random_forest_best = grid_search.best_estimator_
-# pos_prob = random_forest_best.predict_proba(X_test_enc)[:, 1]
-# print(f'The ROC AUC on testing set is: {roc_auc_score(Y_test, pos_prob):.3f}')
+random_forest_best = grid_search.best_estimator_
+pos_prob = random_forest_best.predict_proba(X_test_enc)[:, 1]
+print(f'The ROC AUC on testing set is: {roc_auc_score(Y_test, pos_prob):.3f}')
