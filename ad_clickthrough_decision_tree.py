@@ -1,63 +1,7 @@
-# import pandas as pd
-# import numpy as np
-
-
-
-# # Target variable
-# # Y = df['click'].astype(int).values
-# Y = pd.to_numeric(df['click'], errors='coerce').fillna(0).astype(int).values
-
-# # Features
-# X = df.drop(['click', 'id', 'hour', 'device_id', 'device_ip'], axis=1).values
-# print(X.shape)
-
-# # The samples are in chronological order
-# # I cannot split the data randomly because I cannot use future samples to predict previous ones, 
-# n_train = int(n_rows * .9) # hyper parameter to tune later
-# X_train = X[:n_train]
-# Y_train = Y[:n_train]
-# X_test = X[n_train:]
-# Y_test = X[n_train:]
-
-# # One hot encoder
-# from sklearn.preprocessing import OneHotEncoder
-# enc = OneHotEncoder(handle_unknown='ignore')
-
-# # Fit training set
-# X_train_enc = enc.fit_transform(X_train) # each converted sample is a sparse vector
-# print(X_train_enc[0])
-
-# # Transform the testing set
-# X_test_enc = enc.transform(X_test)
-
-# # Specify hyperparameters
-# from sklearn.tree import DecisionTreeClassifier
-# parameters = {'max_depth': [3, 10, None]}
-
-# # Initialize decision tree
-# decision_tree = DecisionTreeClassifier(criterion='gini', min_samples_split=30)
-
-# # Find class distrubtion to check for imbalances
-# values, counts = np.unique(Y, return_counts=True)
-# for value, count in zip(values, counts):
-#     print(f'Number of users in {value} class: {count}')
-
-# # 3-fold cross validation since training set is relatively small
-# from sklearn.model_selection import GridSearchCV
-# grid_search = GridSearchCV(decision_tree, parameters, n_jobs=-1, cv=3, scoring='roc_auc')
-
-# grid_search.fit(X_train_enc, Y_train)
-# print(grid_search.best_params_)
-
-# decision_tree_best = grid_search.best_estimator_
-# pos_prob = decision_tree_best.predict_proba(X_test_enc)[:, 1]
-# from sklearn.metrics import roc_auc_score
-# print(f'The ROC AUC on testing set is: {roc_auc_score(Y_test, pos_prob):.3f}')
-
 # Read data set
 import pandas as pd
 n_rows = 300000
-df = pd.read_csv("/Users/matthewyacovone/Desktop/ml-by-example/PACTd/train", nrows=n_rows)
+df = pd.read_csv("/Users/matthewyacovone/Desktop/ml-by-example/PACT/train", nrows=n_rows)
 print(df.head(5))
 
 # The target variable is the click column
@@ -110,14 +54,14 @@ decision_tree_best = grid_search.best_estimator_
 pos_prob = decision_tree_best.predict_proba(X_test_enc)[:, 1]
 
 from sklearn.metrics import roc_auc_score
-print(f'The ROC AUC on testing set is: {roc_auc_score(Y_test, pos_prob):.3f}')
+print(f'The ROC AUC on testing set using a decision tree is: {roc_auc_score(Y_test, pos_prob):.3f}')
 
 # Compare decision tree results to random selection
 pos_prob = np.zeros(len(Y_test))
 click_index = np.random.choice(len(Y_test), int(len(Y_test) *  51211.0/300000), replace=False)
 pos_prob[click_index] = 1
 
-print(f'The ROC AUC on testing set is: {roc_auc_score(Y_test, pos_prob):.3f}')
+print(f'The ROC AUC on testing set using random sampling is: {roc_auc_score(Y_test, pos_prob):.3f}')
 
 
 # from sklearn.ensemble import RandomForestClassifier
