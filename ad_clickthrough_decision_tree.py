@@ -1,5 +1,6 @@
 # Read data set
 import pandas as pd
+n_classes = 2 # binary
 n_rows = 300000
 df = pd.read_csv("/Users/matthewyacovone/Desktop/ml-by-example/PACT/train", nrows=n_rows)
 print(df.head(5))
@@ -27,20 +28,29 @@ print(X_train_enc[0]) # Each converted sample is a sparse vector
 # Transform the testing set using the trained one-hot encoder
 X_test_enc = enc.transform(X_test)
 
-# Specify hyperparameters
-from sklearn.tree import DecisionTreeClassifier
-parameters = {'max_depth': [3, 10, None]}
-
-# Initialize decision tree
-decision_tree = DecisionTreeClassifier(criterion='gini', min_samples_split=30)
-
 # Find class distrubtion to check for imbalances
 import numpy as np
+class_weights = {}
+
 values, counts = np.unique(Y, return_counts=True)
 for value, count in zip(values, counts):
     print(f'Number of users in {value} class: {count}')
     ctr_percent = (count / len(Y)) * 100
     print(f"{ctr_percent:.1f}% of training samples are {value}.")
+
+    # specify class weights
+    weight = n_rows / (n_classes * count)
+    class_weights[value] = weight
+
+print(class_weights)
+
+# Specify hyperparameters
+from sklearn.tree import DecisionTreeClassifier
+# parameters = {'max_depth': [3, 10, 15, 20, 25, 30, 35, 50, None], 'min_samples_split': [150, 350, 500, 750, 1000, 1150, 1250, 1500]}
+parameters = {'max_depth': [30], 'min_samples_split': [1000]}
+ 
+# Initialize decision tree
+decision_tree = DecisionTreeClassifier(criterion='gini', class_weight=class_weights)
 
 # 3-fold cross validation since training set is relatively small
 from sklearn.model_selection import GridSearchCV
@@ -57,11 +67,11 @@ from sklearn.metrics import roc_auc_score
 print(f'The ROC AUC on testing set using a decision tree is: {roc_auc_score(Y_test, pos_prob):.3f}')
 
 # Compare decision tree results to random selection
-pos_prob = np.zeros(len(Y_test))
-click_index = np.random.choice(len(Y_test), int(len(Y_test) *  51211.0/300000), replace=False)
-pos_prob[click_index] = 1
+# pos_prob = np.zeros(len(Y_test))
+# click_index = np.random.choice(len(Y_test), int(len(Y_test) *  51211.0/300000), replace=False)
+# pos_prob[click_index] = 1
 
-print(f'The ROC AUC on testing set using random sampling is: {roc_auc_score(Y_test, pos_prob):.3f}')
+# print(f'The ROC AUC on testing set using random sampling is: {roc_auc_score(Y_test, pos_prob):.3f}')
 
 
 # from sklearn.ensemble import RandomForestClassifier
