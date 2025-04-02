@@ -68,12 +68,13 @@ from sklearn.metrics import roc_auc_score
 print(f'The ROC AUC on testing set using a decision tree is: {roc_auc_score(Y_test, pos_prob):.3f}')
 
 # Compare decision tree results to random selection
-# pos_prob = np.zeros(len(Y_test))
-# click_index = np.random.choice(len(Y_test), int(len(Y_test) *  51211.0/300000), replace=False)
-# pos_prob[click_index] = 1
+pos_prob = np.zeros(len(Y_test))
+click_index = np.random.choice(len(Y_test), int(len(Y_test) *  51211.0/300000), replace=False)
+pos_prob[click_index] = 1
 
-# print(f'The ROC AUC on testing set using random sampling is: {roc_auc_score(Y_test, pos_prob):.3f}')
+print(f'The ROC AUC on testing set using random sampling is: {roc_auc_score(Y_test, pos_prob):.3f}')
 
+# Compare to a random forest ensemble
 from sklearn.ensemble import RandomForestClassifier
 
 parameters = {'max_depth': [None], 'min_samples_split': [50]} # best parameters after tuning
@@ -85,4 +86,14 @@ print(grid_search.best_score_)
 
 random_forest_best = grid_search.best_estimator_
 pos_prob = random_forest_best.predict_proba(X_test_enc)[:, 1]
-print(f'The ROC AUC on testing set is: {roc_auc_score(Y_test, pos_prob):.3f}')
+print(f'The ROC AUC on testing set with a random forest is: {roc_auc_score(Y_test, pos_prob):.3f}')
+
+# Compare to Gradient Boosted Trees
+import xgboost as xgb
+model = xgb.XGBClassifier(learning_rate=0.1, max_depth=6, n_estimators=1000)
+
+# Train the GBT
+model.fit(X_train_enc, Y_train)
+
+pos_prob = model.predict_proba(X_test_enc)[:, 1]
+print(f'The ROC AUC on testing set using GBT is: {roc_auc_score(Y_test, pos_prob):.3f}')
